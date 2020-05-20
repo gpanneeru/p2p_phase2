@@ -45,9 +45,15 @@ class Demo():
         keywords = keywords.split(",")
         if not os.path.exists(self.node.id):
             os.mkdir(self.node.id)
-        writeto = open(self.node.id+"/shared_repo_list",'a+')
+        dict = {}
         for keyword in keywords:
-            writeto.write(keyword+" "+repo_name+"\n")
+            if keyword in dict:
+                dict[keyword].append(repo_name)
+            else:
+                dict[keyword] = [repo_name]
+        f = open(self.node.id+"/shared_repo_list",'a+')
+        f.write( str(dict) )
+        f.close()
 
     def stop(self):
         if self.node:
@@ -72,7 +78,7 @@ def main():
             demo.stop()
         elif string=="":
             pass
-        elif string.startswith("add_repo"):
+        elif string.startswith("share"):
             repo_name = string.split(" ")[1]
             base_path = os.getcwd()
             demo.add_repo(base_path+"/"+repo_name)
