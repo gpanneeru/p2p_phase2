@@ -6,6 +6,7 @@ import random
 import hashlib
 import ast,os,math
 from filenodeconnection import FileNodeConnection
+import json
 
 """
 Author : Maurice Snoeren <macsnoeren(at)gmail.com>
@@ -229,6 +230,14 @@ class NodeConnection(threading.Thread):
                         keyword = message.split(" ")[1]
                         repos = self.get_repos(keyword)
                         self.send("search_result "+repos)
+                    elif message[:4] == "pkt:":
+                        message = message[4::]
+                        json_packet = json.loads(message)
+                        if json_packet["command"] == "ping":
+                            self.main_node.pong(json_packet)
+                            self.main_node.forward_packet(json_packet)
+                        elif json_packet["command"] == "pong":
+                            self.main_node.forward_packet(json_packet)
                     self.buffer = self.buffer[index + 4::]
 
                     self.main_node.message_count_recv += 1

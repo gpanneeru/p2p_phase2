@@ -4,6 +4,8 @@ import time
 import threading
 import random
 import hashlib
+import json
+import os
 
 from nodeconnection import NodeConnection
 
@@ -192,6 +194,86 @@ class Node(threading.Thread):
                 self.debug_print("Node send_to_node: Error while sending data to the node (" + str(e) + ")")
         else:
             self.debug_print("Node send_to_node: Could not send the data, node is not found!")
+
+    def ping(self, host, port):
+        data_packet = {}
+        data_packet["command"] = "ping"
+        data_packet["source_ip"] = self.host
+        data_packet["source_port"] =  self.port
+        data_packet["source_node_id"] = self.id
+        data_packet["sender_ip"] = self.host
+        data_packet["sender_port"] = self.port
+        data_packet["sender_node_id"] = self.id
+        exclude = []
+        exclude.append(self)
+        self.send_to_nodes("pkt:" + json.dumps(data_packet), exclude)
+
+    def pong(self, ping_packet):
+        data_packet = {}
+        data_packet["command"] = "pong"
+        data_packet["source_ip"] = self.host
+        data_packet["source_port"] = self.port
+        data_packet["source_node_id"] = self.id
+        data_packet["sender_ip"] = self.host
+        data_packet["sender_port"] = self.port
+        data_packet["sender_node_id"] = self.id
+        data_packet["destination_ip"] = ping_packet["source_ip"]
+        data_packet["destination_port"] = ping_packet["source_port"]
+        data_packet["destination_node_id"] = ping_packet["source_node_id"]
+        data_packet["receiver_ip"] = ping_packet["sender_ip"]
+        data_packet["receiver_port"] = ping_packet["sender_port"]
+        shared_repos = set()
+        if os.path.exists(".nodes/"+ self.id):
+            f = open(".nodes/"+self.id+"/shared_repo_list",'r')
+            for line in f.readlines():
+                shared_repos.add(line.strip("() \n").split(",")[1].strip())
+            f.close()
+        data_packet["shared_content"] = list(shared_repos)
+        receiver = None
+        for node in self.nodes_outbound:
+            if (ping_packet["sender_ip"] == node.host and ping_packet["sender_port"] == node.port) or ping_packet["sender_node_id"] == node.id:
+                receiver = node
+
+        if receiver is None: 
+            for node in self.nodes_inbound:
+                if (ping_packet["sender_ip"] == node.host and ping_packet["sender_port"] == node.port) or ping_packet["sender_node_id"] == node.id:
+                    receiver = node
+
+        if receiver is not None:
+            self.send_to_node(receiver, "pkt:" + json.dumps(data_packet))
+
+    def forward_packet(self, packet):
+        exclude = []
+        if packet["command"] == "pong" and ((self.host == packet["destination_ip"] and self.port == 
+        packet["destination_port"]) or self.id == packet["destination_node_id"]):
+            ### TODO : Handle the code for shared repos here
+            # print (packet["shared_content"])
+            return
+
+        exclude = []
+        for node in self.nodes_outbound:
+            if (packet["sender_ip"] == node.host and packet["sender_port"] == node.port) or packet["sender_node_id"] == node.id:
+                exclude.append(node)
+
+        for node in self.nodes_inbound:
+            if (packet["sender_ip"] == node.host and packet["sender_port"] == node.port) or packet["sender_node_id"] == node.id:
+                exclude.append(node)
+        packet["sender_ip"] = self.host
+        packet["sender_port"] = self.port
+        packet["sender_node_id"] = self.id
+        self.send_to_nodes("pkt:" + json.dumps(packet), exclude)
+
+    # Check if node is already connected with this node!
+    def is_connected(self, host, port):
+        for node in self.nodes_outbound:
+            if node.host == host and node.port == port:
+                print("connect_with_node: Already connected with this node.")
+                return True
+        for node in self.nodes_inbound:
+            if node.host == host and node.port == port:
+                print("connect_with_node: Already connected with this node.")
+                return True
+        return False
 
     def connect_with_node(self, host, port):
         """ Make a connection with another node that is running on host with port. When the connection is made, 
