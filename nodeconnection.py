@@ -106,6 +106,11 @@ class NodeConnection(threading.Thread):
                 index = self.buffer.find("-TSN")
                 while index > 0:
                     message = self.buffer[0:index]
+                    print("message received:",message)
+                    if message=="PING":
+                        self.send("PONG")
+                    if message=="PONG":
+                        self.main_node.heart_beat = True
                     self.buffer = self.buffer[index + 4::]
 
                     self.main_node.message_count_recv += 1

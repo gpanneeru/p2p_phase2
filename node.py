@@ -56,6 +56,7 @@ class Node(threading.Thread):
         # Nodes that this nodes is connected to
         self.nodes_outbound = []  # Nodes that we are connected to (US)->N
 
+        self.heart_beat = False
         # Create a unique ID for each node.
         # TODO: A fixed unique ID is required for each node, node some random is created, need to think of it.
         #id = hashlib.sha512()
@@ -97,7 +98,41 @@ class Node(threading.Thread):
         self.sock.listen(1)
 
     def print_connections(self):
-        """Prints the connection overview of the node. How many inbound and outbound connections have been made."""
+        temp_inbound = []
+        temp_outbound = []
+        print("Initial lengths: ", len(self.nodes_inbound), len(self.nodes_outbound))
+        for node in self.nodes_inbound:
+            print("inbound:",node.id)
+            try:
+                #sock = node.sock
+                self.heart_beat = False
+                node.send("PING") # Send my id to the connected node!
+                #connected_node_id = str(sock.recv(4096).decode('utf-8')) # When a node is connected, it sends it id!
+                time.sleep(0.5)
+                if self.heart_beat:
+                    temp_inbound.append(node)
+                else:
+                    node.terminate_flag.set()
+                #print("ponger:",connected_node_id)
+            except Exception as e:
+                print("Exception: "+str(e))
+        for node in self.nodes_outbound:
+            print("outbound:",node.id)
+            try:
+                #sock = node.sock
+                self.heart_beat = False
+                node.send("PING") # Send my id to the connected node!
+                #connected_node_id = str(sock.recv(4096).decode('utf-8')) # When a node is connected, it sends it id!
+                time.sleep(0.5)
+                #print("ponger:",connected_node_id)
+                if self.heart_beat:
+                    temp_outbound.append(node)
+                else:
+                    node.terminate_flag.set()
+            except Exception as e:
+                print("Exception: "+str(e))
+        self.nodes_inbound = temp_inbound
+        self.nodes_outbound = temp_outbound
         print("Node connection overview:")
         total_nodes = len(self.nodes_inbound)+len(self.nodes_outbound)
         print("- Total nodes connected: %d" % total_nodes)
@@ -192,6 +227,7 @@ class Node(threading.Thread):
 
         except Exception as e:
             self.debug_print("TcpServer.connect_with_node: Could not connect with node. (" + str(e) + ")")
+            print("Could not connect with node. (" + str(e) + ")")
 
     def disconnect_with_node(self, node):
         """Disconnect the TCP/IP connection with the specified node. It stops the node and joins the thread.
@@ -228,18 +264,25 @@ class Node(threading.Thread):
             try:
                 self.debug_print("Node: Wait for incoming connection")
                 connection, client_address = self.sock.accept()
-                
                 # Basic information exchange (not secure) of the id's of the nodes!
                 connected_node_id = str(connection.recv(4096).decode('utf-8')) # When a node is connected, it sends it id!
-                print("New connection:",connected_node_id)
-                connection.send(self.id.encode('utf-8')) # Send my id to the connected node!
+                print("connection:",connected_node_id) 
+                connection.send(self.id.encode('utf-8'))
+                old = False
+                for node in self.nodes_inbound+self.nodes_outbound:
+                    if node.id==connected_node_id:
+                        old = True
+                        break
+                if not old:
+                    print("New connection:",connected_node_id)
+                    #connection.send(self.id.encode('utf-8')) # Send my id to the connected node!
 
-                thread_client = self.create_new_connection(connection, connected_node_id, client_address[0], client_address[1])
-                thread_client.start()
+                    thread_client = self.create_new_connection(connection, connected_node_id, client_address[0], client_address[1])
+                    thread_client.start()
 
-                self.nodes_inbound.append(thread_client)
+                    self.nodes_inbound.append(thread_client)
 
-                self.inbound_node_connected(thread_client)
+                    self.inbound_node_connected(thread_client)
                 
             except socket.timeout:
                 self.debug_print('Node: Connection timeout!')

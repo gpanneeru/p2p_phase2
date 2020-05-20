@@ -45,9 +45,9 @@ class Demo():
         keywords = keywords.split(",")
         if not os.path.exists(self.node.id):
             os.mkdir(self.node.id)
-        writeto = open(self.node.id+"shared_repo_list",'a+')
+        writeto = open(self.node.id+"/shared_repo_list",'a+')
         for keyword in keywords:
-            writeto.write(keyword+" "+repo_name)
+            writeto.write(keyword+" "+repo_name+"\n")
 
     def stop(self):
         if self.node:
