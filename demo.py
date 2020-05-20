@@ -1,6 +1,8 @@
 from node import Node
 import time
 import os
+import re
+from os import walk
 
 class Demo():
 
@@ -40,17 +42,43 @@ class Demo():
     def show_connections(self):
         self.node.print_connections()
 
-    def add_repo(self,repo_name):
-        keywords = input("Please enter the keywords related to the repo(comma separated):")
-        keywords = keywords.split(",")
+    def add_repo(self,repo_path):
+        keywords = set()
+
+        with open(".exclude_patterns") as file:
+            excluded_pattern_list = file.readlines()
+        excluded_pattern_list = [x.strip() for x in excluded_pattern_list]
+
+        for (_dirpath, dirnames, filenames) in walk(repo_path):
+            for filename in filenames:
+                is_match = True
+                for pattern in excluded_pattern_list:
+                    if re.search(pattern, filename) != None:
+                        is_match = False
+                        break
+                if (is_match):
+                    keywords.add(filename)
+
+            for dirname in dirnames:
+                is_match = True
+                for pattern in excluded_pattern_list:
+                    if re.search(pattern, dirname) != None:
+                        is_match = False
+                        break
+                if (is_match):
+                    keywords.add(dirname)
+                else:
+                    dirnames.remove(dirname)
+
         if not os.path.exists(self.node.id):
             os.mkdir(self.node.id)
         dict = {}
         for keyword in keywords:
             if keyword in dict:
-                dict[keyword].append(repo_name)
+                dict[keyword].append(repo_path)
             else:
-                dict[keyword] = [repo_name]
+                dict[keyword] = [repo_path]
+        dict[repo_path.split('/')[-1]] = repo_path
         f = open(self.node.id+"/shared_repo_list",'a+')
         f.write( str(dict) )
         f.close()
@@ -79,9 +107,8 @@ def main():
         elif string=="":
             pass
         elif string.startswith("share"):
-            repo_name = string.split(" ")[1]
-            base_path = os.getcwd()
-            demo.add_repo(base_path+"/"+repo_name)
+            repo_path = string.split(" ")[1]
+            demo.add_repo(repo_path)
         elif string=="show connections":
             demo.show_connections()
         else:
