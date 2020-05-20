@@ -204,7 +204,9 @@ class Node(threading.Thread):
         data_packet["sender_ip"] = self.host
         data_packet["sender_port"] = self.port
         data_packet["sender_node_id"] = self.id
-        self.send_to_nodes("pkt:" + json.dumps(data_packet))
+        exclude = []
+        exclude.append(self)
+        self.send_to_nodes("pkt:" + json.dumps(data_packet), exclude)
 
     def pong(self, ping_packet):
         data_packet = {}
@@ -214,6 +216,7 @@ class Node(threading.Thread):
         data_packet["source_node_id"] = self.id
         data_packet["sender_ip"] = self.host
         data_packet["sender_port"] = self.port
+        data_packet["sender_node_id"] = self.id
         data_packet["destination_ip"] = ping_packet["source_ip"]
         data_packet["destination_port"] = ping_packet["source_port"]
         data_packet["destination_node_id"] = ping_packet["source_node_id"]
@@ -246,13 +249,14 @@ class Node(threading.Thread):
             ### TODO : Handle the code for shared repos here
             # print (packet["shared_content"])
             return
+
         exclude = []
         for node in self.nodes_outbound:
-            if packet["sender_ip"] == node.host and packet["sender_port"] == node.port:
+            if (packet["sender_ip"] == node.host and packet["sender_port"] == node.port) or packet["sender_node_id"] == node.id:
                 exclude.append(node)
 
         for node in self.nodes_inbound:
-            if packet["sender_ip"] == node.host and packet["sender_port"] == node.port:
+            if (packet["sender_ip"] == node.host and packet["sender_port"] == node.port) or packet["sender_node_id"] == node.id:
                 exclude.append(node)
         packet["sender_ip"] = self.host
         packet["sender_port"] = self.port
