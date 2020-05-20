@@ -4,6 +4,7 @@ import time
 import threading
 import random
 import hashlib
+import json
 
 """
 Author : Maurice Snoeren <macsnoeren(at)gmail.com>
@@ -111,6 +112,13 @@ class NodeConnection(threading.Thread):
                         self.send("PONG")
                     if message=="PONG":
                         self.main_node.heart_beat = True
+                    elif message[:4] == "pkt:":
+                        message = message[4::]
+                        json_packet = json.loads(message)
+                        if json_packet["command"] == "ping":
+                            self.main_node.pong(json_packet)
+                        elif json_packet["command"] == "pong":
+                            self.main_node.forward_packet(json_packet)
                     self.buffer = self.buffer[index + 4::]
 
                     self.main_node.message_count_recv += 1
