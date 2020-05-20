@@ -4,6 +4,8 @@ import time
 import threading
 import random
 import hashlib
+import ast,os,math
+from filenodeconnection import FileNodeConnection
 
 """
 Author : Maurice Snoeren <macsnoeren(at)gmail.com>
@@ -41,12 +43,13 @@ class NodeConnection(threading.Thread):
         self.main_node = main_node
         self.sock = sock
         self.terminate_flag = threading.Event()
-
+        self.file_terminate = False
         # Variable for parsing the incoming json messages
         self.buffer = ""
 
         # The id of the connected node
         self.id = id
+        self.dict = {}
 
         self.main_node.debug_print("NodeConnection.send: Started with client (" + self.id + ") '" + self.host + ":" + str(self.port) + "'")
 
@@ -72,6 +75,92 @@ class NodeConnection(threading.Thread):
     def stop(self):
         """Terminates the connection and the thread is stopped."""
         self.terminate_flag.set()
+
+
+    def get_ready_to_receive_files(self):
+        print("In get ready")
+        fileclient = FileNodeConnection(self.main_node.id)
+        fileclient.start()
+
+    def senddata(self,file_name,path,sock,repo):
+        try:
+            filehandle = open(path+file_name,'r')
+        except IOError:
+            sock.send('ABORT'.encode('utf-8'))
+            print('File ' +str(path+file_name)+ ' not found; not sending...')
+        else:
+            #writes 8 byte header consisting of:
+            #length of file in kb (4b)
+            #length of filename (4b)
+            numbytes = math.ceil(os.stat(path+file_name).st_size)
+            #amount of KB (1024) to receive, written to 4-byte integer
+            filename = repo + "/" + file_name if repo else file_name
+            filenamebytes = len(filename)
+            print("Number of bytes in filename:",filenamebytes)
+            print("Number of bytes in file data:",numbytes)
+            print('Sending '+str(path+file_name)+'...')
+            print("what are you sending?",str(numbytes)+" "+str(filenamebytes))
+            sending = str(numbytes).zfill(6)+" "+str(filenamebytes).zfill(3)
+            sock.send(sending.encode('utf-8'))
+            data = filename
+    #        print("filename: "+data)
+            sock.send(data.encode('utf-8'))
+            while True:
+                data = filehandle.read(1024)
+                if not data:
+                    break
+                sock.send(data.encode('utf-8'))
+            filehandle.close()
+            print('Send complete for '+filename)
+
+    def getListOfFiles(self,dirName):
+        # create a list of file and sub directories 
+        # names in the given directory 
+        listOfFile = os.listdir(dirName)
+        allFiles = list()
+        # Iterate over all the entries
+        for entry in listOfFile:
+            # Create full path
+            fullPath = os.path.join(dirName, entry)
+            # If entry is a directory then get the list of files in this directory 
+            if os.path.isdir(fullPath):
+                allFiles = allFiles + getListOfFiles(fullPath)
+            else:
+                allFiles.append(fullPath)
+                    
+        return allFiles
+
+    def sendrepo(self,repo):
+        print("In send repo function")
+        repo_name = repo.split("/")[-1]
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('127.0.0.1', 10001))
+        if os.path.isfile(repo):
+            sock.send(str(1).encode('utf-8'))
+            name = repo.split("/")[-1]
+            senddata(name,repo.replace(name,""),"")
+        else:
+            print("Repo Available, not file")
+            total_files = sum([len(files) for r, d, files in os.walk(repo)])
+            sock.send(str(total_files).encode('utf-8'))
+            files = self.getListOfFiles(repo)
+            print("Total files",total_files,files)
+            for file in files:
+                path = file.split(repo_name)[0]+repo_name+"/"
+                file_name = file.split(repo_name)[1][1:]
+                self.senddata(file_name,path,sock,repo_name)
+
+    def get_repos(self,keyword):
+        folder = self.main_node.id+"/shared_repo_list"
+        if os.path.exists(folder):
+            s = open(folder, 'r').read()
+            dict = ast.literal_eval(s)
+            if keyword in dict:
+                print("Repos available:",dict[keyword])
+                for name in dict[keyword]:
+                    self.dict[name.split("/")[-1]] = name
+                return ",".join(dict[keyword])
+        return ""
 
     # Required to implement the Thread. This is the main loop of the node client.
     def run(self):
@@ -107,10 +196,39 @@ class NodeConnection(threading.Thread):
                 while index > 0:
                     message = self.buffer[0:index]
                     print("message received:",message)
-                    if message=="PING":
-                        self.send("PONG")
-                    if message=="PONG":
+                    if message.startswith("request"):
+                        repo_name = message.split(" ")[1]
+                        cur_dir = os.getcwd()
+                        if os.path.exists(cur_dir+"/"+repo_name):
+                            #print("Sending "+repo_name+" to "+self.id)
+                            print("Ready to send")
+                            self.send("Sending "+repo_name)
+                        else:
+                            self.send("Cannot Send "+repo_name+", file/folder doesn't exist")
+                    if message.startswith("Sending"):
+                        repo_name = message.split(" ")[1]
+                        self.get_ready_to_receive_files()
+                        print("ready to receive")
+                        self.send("ready to receive "+repo_name)
+                    if message.startswith("ready to receive"):
+                        repo_name = message.split(" ")[-1]
+                        self.sendrepo(self.dict[repo_name])
+                    if message.startswith("Cannot"):
+                        print(message)
+                    if message.startswith("search_result"):
+                        results = message.split(" ")[1]
+                        if results:
+                            print("Results from Node:",self.id)
+                            for i,result in enumerate(results.split(",")):
+                                print(str(i+1)+". "+result.split("/")[-1])
+                    if message=="PINGER":
+                        self.send("PONGER")
+                    if message=="PONGER":
                         self.main_node.heart_beat = True
+                    if message.startswith("search "):
+                        keyword = message.split(" ")[1]
+                        repos = self.get_repos(keyword)
+                        self.send("search_result "+repos)
                     self.buffer = self.buffer[index + 4::]
 
                     self.main_node.message_count_recv += 1

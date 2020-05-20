@@ -45,15 +45,27 @@ class Demo():
         keywords = keywords.split(",")
         if not os.path.exists(self.node.id):
             os.mkdir(self.node.id)
-        dict = {}
+        if os.path.exists(self.node.id+"/shared_repo_list"):
+            s = open(self.node.id+"/shared_repo_list", 'r').read()
+            dict = ast.literal_eval(s)
+        else:
+            dict = {}
         for keyword in keywords:
-            if keyword in dict:
+            if keyword in dict and repo_name not in dict[keyword]:
                 dict[keyword].append(repo_name)
             else:
                 dict[keyword] = [repo_name]
-        f = open(self.node.id+"/shared_repo_list",'a+')
+        f = open(self.node.id+"/shared_repo_list",'w+')
         f.write( str(dict) )
         f.close()
+
+    def search(self,keyword):
+        self.node.send_to_nodes("search "+keyword)
+
+    def request(self,repo_name,node_id):
+        for connection in self.node.nodes_inbound+self.node.nodes_outbound:
+            if connection.id==node_id:
+                connection.send("request "+repo_name)
 
     def stop(self):
         if self.node:
@@ -82,6 +94,12 @@ def main():
             repo_name = string.split(" ")[1]
             base_path = os.getcwd()
             demo.add_repo(base_path+"/"+repo_name)
+        elif string.startswith("search"):
+            keyword = string.split(" ")[1]
+            demo.search(keyword)
+        elif string.startswith("request"):
+            repo_name,node_id = string.split(" ")[1:]
+            demo.request(repo_name,node_id)
         elif string=="show connections":
             demo.show_connections()
         else:

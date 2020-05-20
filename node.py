@@ -106,7 +106,7 @@ class Node(threading.Thread):
             try:
                 #sock = node.sock
                 self.heart_beat = False
-                node.send("PING") # Send my id to the connected node!
+                node.send("PINGER") # Send my id to the connected node!
                 #connected_node_id = str(sock.recv(4096).decode('utf-8')) # When a node is connected, it sends it id!
                 time.sleep(0.5)
                 if self.heart_beat:
@@ -121,7 +121,7 @@ class Node(threading.Thread):
             try:
                 #sock = node.sock
                 self.heart_beat = False
-                node.send("PING") # Send my id to the connected node!
+                node.send("PINGER") # Send my id to the connected node!
                 #connected_node_id = str(sock.recv(4096).decode('utf-8')) # When a node is connected, it sends it id!
                 time.sleep(0.5)
                 #print("ponger:",connected_node_id)
