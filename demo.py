@@ -70,8 +70,8 @@ class Demo():
                 else:
                     dirnames.remove(dirname)
 
-        if not os.path.exists(self.node.id):
-            os.mkdir(self.node.id)
+        if not os.path.exists(".nodes/"+ self.node.id):
+            os.mkdir(".nodes/"+self.node.id)
         dict = {}
         for keyword in keywords:
             if keyword in dict:
@@ -79,7 +79,7 @@ class Demo():
             else:
                 dict[keyword] = [repo_path]
         dict[repo_path.split('/')[-1]] = repo_path
-        f = open(self.node.id+"/shared_repo_list",'a+')
+        f = open(".nodes/"+self.node.id+"/shared_repo_list",'a+')
         f.write( str(dict) )
         f.close()
 
