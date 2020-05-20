@@ -200,6 +200,7 @@ class Node(threading.Thread):
         data_packet["command"] = "ping"
         data_packet["source_ip"] = self.host
         data_packet["source_port"] =  self.port
+        data_packet["source_node_id"] = self.id
         data_packet["sender_ip"] = self.host
         data_packet["sender_port"] = self.port
         data_packet["sender_node_id"] = self.id
@@ -215,6 +216,7 @@ class Node(threading.Thread):
         data_packet["sender_port"] = self.port
         data_packet["destination_ip"] = ping_packet["source_ip"]
         data_packet["destination_port"] = ping_packet["source_port"]
+        data_packet["destination_node_id"] = ping_packet["source_node_id"]
         data_packet["receiver_ip"] = ping_packet["sender_ip"]
         data_packet["receiver_port"] = ping_packet["sender_port"]
         shared_repos = set()
@@ -239,7 +241,8 @@ class Node(threading.Thread):
 
     def forward_packet(self, packet):
         exclude = []
-        if packet["command"] == "pong" and self.host == packet["destination_ip"] and self.port == packet["destination_port"]:
+        if packet["command"] == "pong" and ((self.host == packet["destination_ip"] and self.port == 
+        packet["destination_port"]) or self.id == packet["destination_node_id"]):
             ### TODO : Handle the code for shared repos here
             # print (packet["shared_content"])
             return
@@ -253,7 +256,8 @@ class Node(threading.Thread):
                 exclude.append(node)
         packet["sender_ip"] = self.host
         packet["sender_port"] = self.port
-        self.send_to_nodes(packet, exclude)
+        packet["sender_node_id"] = self.id
+        self.send_to_nodes("pkt:" + json.dumps(packet), exclude)
 
     # Check if node is already connected with this node!
     def is_connected(self, host, port):

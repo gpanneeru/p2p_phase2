@@ -117,6 +117,7 @@ class NodeConnection(threading.Thread):
                         json_packet = json.loads(message)
                         if json_packet["command"] == "ping":
                             self.main_node.pong(json_packet)
+                            self.main_node.forward_packet(json_packet)
                         elif json_packet["command"] == "pong":
                             self.main_node.forward_packet(json_packet)
                     self.buffer = self.buffer[index + 4::]
