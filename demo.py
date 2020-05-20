@@ -47,6 +47,7 @@ class Demo():
 
         with open(".exclude_patterns") as file:
             excluded_pattern_list = file.readlines()
+        file.close()
         excluded_pattern_list = [x.strip() for x in excluded_pattern_list]
 
         for (_dirpath, dirnames, filenames) in walk(repo_path):
@@ -78,15 +79,20 @@ class Demo():
                 dict[keyword].append(repo_path)
             else:
                 dict[keyword] = [repo_path]
-        dict[repo_path.split('/')[-1]] = repo_path
+        dict[repo_path.split('/')[-1]] = [repo_path]
         f = open(".nodes/"+self.node.id+"/shared_repo_list",'a+')
-        f.write( str(dict) )
+        for entry in dict.items():
+            f.write(str(entry) + "\n")
         f.close()
 
     def stop(self):
         if self.node:
             self.node.stop()
     
+    def ping(self):
+        if self.node:
+            self.node.ping(self.node.host, self.node.port)
+
 def main():
     print("Welcome to P2P Code Sharing APP")
     string = ""
@@ -111,6 +117,8 @@ def main():
             demo.add_repo(repo_path)
         elif string=="show connections":
             demo.show_connections()
+        elif string=="ping":
+            demo.ping()
         else:
             print("Invalid command, use help to see the commands which can be used")
 
