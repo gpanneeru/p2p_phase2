@@ -101,6 +101,10 @@ class Demo():
         if self.node:
             self.node.ping(self.node.host, self.node.port)
 
+    def query(self, query_param):
+        if self.node:
+            self.node.query(query_param)
+
 def main():
     print("Welcome to P2P Code Sharing APP")
     string = ""
@@ -133,6 +137,9 @@ def main():
             demo.show_connections()
         elif string=="ping":
             demo.ping()
+        elif string.startswith("query"):
+            query_param = string.split(" ")[1]
+            demo.query(query_param)
         else:
             print("Invalid command, use help to see the commands which can be used")
 

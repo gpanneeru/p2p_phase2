@@ -244,20 +244,24 @@ class Node(threading.Thread):
 
     def forward_packet(self, packet):
         exclude = []
-        if packet["command"] == "pong" and ((self.host == packet["destination_ip"] and self.port == 
+        if (packet["command"] == "pong" or packet["command"] == "query_hit") and ((self.host == packet["destination_ip"] and self.port == 
         packet["destination_port"]) or self.id == packet["destination_node_id"]):
             ### TODO : Handle the code for shared repos here
-            # print (packet["shared_content"])
             return
 
         exclude = []
         for node in self.nodes_outbound:
             if (packet["sender_ip"] == node.host and packet["sender_port"] == node.port) or packet["sender_node_id"] == node.id:
                 exclude.append(node)
+            elif (packet["command"] == "ping" or packet["command"] == "query") and packet["source_node_id"] == node.id:
+                exclude.append(node)
 
         for node in self.nodes_inbound:
             if (packet["sender_ip"] == node.host and packet["sender_port"] == node.port) or packet["sender_node_id"] == node.id:
                 exclude.append(node)
+            elif (packet["command"] == "ping" or packet["command"] == "query") and packet["source_node_id"] == node.id:
+                exclude.append(node)
+
         packet["sender_ip"] = self.host
         packet["sender_port"] = self.port
         packet["sender_node_id"] = self.id
@@ -274,6 +278,62 @@ class Node(threading.Thread):
                 print("connect_with_node: Already connected with this node.")
                 return True
         return False
+
+    def query(self, query_param):
+        data_packet = {}
+        data_packet["command"] = "query"
+        data_packet["query_param"] = query_param
+        data_packet["source_ip"] = self.host
+        data_packet["source_port"] =  self.port
+        data_packet["source_node_id"] = self.id
+        data_packet["sender_ip"] = self.host
+        data_packet["sender_port"] = self.port
+        data_packet["sender_node_id"] = self.id
+        exclude = []
+        exclude.append(self)
+        self.send_to_nodes("pkt:" + json.dumps(data_packet), exclude)
+
+    def query_hit(self, query_packet):
+        data_packet = {}
+        data_packet["command"] = "query_hit"
+        data_packet["param"] = query_packet["query_param"]
+        data_packet["source_ip"] = self.host
+        data_packet["source_port"] = self.port
+        data_packet["source_node_id"] = self.id
+        data_packet["sender_ip"] = self.host
+        data_packet["sender_port"] = self.port
+        data_packet["sender_node_id"] = self.id
+        data_packet["destination_ip"] = query_packet["source_ip"]
+        data_packet["destination_port"] = query_packet["source_port"]
+        data_packet["destination_node_id"] = query_packet["source_node_id"]
+        data_packet["receiver_ip"] = query_packet["sender_ip"]
+        data_packet["receiver_port"] = query_packet["sender_port"]
+        search_results = set()
+        if os.path.exists(".nodes/"+ self.id):
+            f = open(".nodes/"+self.id+"/shared_repo_list",'r')
+            for line in f.readlines():
+                line = line.strip("()' \n")
+                keyword =  line.split(",")[0].strip().strip("'")
+                if str(keyword) == str(query_packet["query_param"]): ## Exact match of keyword and query param
+                    search_results.add(line.split(",")[1].strip())
+            f.close()
+
+        if len(search_results) == 0:
+            return
+        data_packet["search_results"] = list(search_results)
+        receiver = None
+        for node in self.nodes_outbound:
+            if (query_packet["sender_ip"] == node.host and query_packet["sender_port"] == node.port) or query_packet["sender_node_id"] == node.id:
+                receiver = node
+
+        if receiver is None:
+            for node in self.nodes_inbound:
+                if (query_packet["sender_ip"] == node.host and query_packet["sender_port"] == node.port) or query_packet["sender_node_id"] == node.id:
+                    receiver = node
+
+        if receiver is not None:
+            self.send_to_node(receiver, "pkt:" + json.dumps(data_packet))
+
 
     def connect_with_node(self, host, port):
         """ Make a connection with another node that is running on host with port. When the connection is made, 

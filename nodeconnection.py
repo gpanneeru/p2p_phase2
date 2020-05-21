@@ -251,6 +251,11 @@ class NodeConnection(threading.Thread):
                             self.main_node.forward_packet(json_packet)
                         elif json_packet["command"] == "pong":
                             self.main_node.forward_packet(json_packet)
+                        elif json_packet["command"] == "query":
+                            self.main_node.query_hit(json_packet)
+                            self.main_node.forward_packet(json_packet)
+                        elif json_packet["command"] == "query_hit":
+                            self.main_node.forward_packet(json_packet)
                     self.buffer = self.buffer[index + 4::]
 
                     self.main_node.message_count_recv += 1
