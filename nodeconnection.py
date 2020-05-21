@@ -145,6 +145,21 @@ class NodeConnection(threading.Thread):
                 file_name = repo_name.join(file.split(repo_name)[1:])
                 self.senddata(file_name,path,sock,repo_name)
 
+    def load_repos(self):
+        if os.path.exists(".nodes/"+ self.main_node.id):
+            repos = set()
+            f = open(".nodes/"+self.main_node.id+"/shared_repo_list",'r')
+            for line in f.readlines():
+                line = line.strip("() \n")
+                key = line.split(",")[0].strip("''")
+                values_string = line.split(",")[1].strip().replace("['","").replace("']","")
+                #print(key,keyword,values_string)
+                #if key==keyword:
+                #    repos.add(values_string)
+                self.dict[values_string.split("/")[-1]] = values_string
+            f.close()
+            return ",".join(repos)
+
     def get_repos(self,keyword):
         if os.path.exists(".nodes/"+ self.main_node.id):
             repos = set()
@@ -156,7 +171,7 @@ class NodeConnection(threading.Thread):
                 print(key,keyword,values_string)
                 if key==keyword:
                     repos.add(values_string)
-                    self.dict[values_string.split("/")[-1]] = values_string
+                    #self.dict[values_string.split("/")[-1]] = values_string
             f.close()
             return ",".join(repos)
         # folder = self.main_node.id+"/shared_repo_list"
@@ -205,6 +220,7 @@ class NodeConnection(threading.Thread):
                     message = self.buffer[0:index]
                     print("message received:",message)
                     if message.startswith("request"):
+                        self.load_repos()
                         repo_name = message.split(" ")[1]
                         repo_file = ".nodes/"+self.main_node.id+"/repo_map.json"
                         cur_dir = os.getcwd()
