@@ -12,7 +12,7 @@ class FileNodeConnection(threading.Thread):
     def __init__(self,id):
         threading.Thread.__init__(self)
         print("initilaizing filethreadclient")
-        self.id = id
+        self.id = "downloads"
         self.file_terminate = threading.Event()
 
     def writeToFile(self,lines1,filename2,filename3):
