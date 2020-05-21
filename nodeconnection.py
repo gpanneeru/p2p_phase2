@@ -87,7 +87,7 @@ class NodeConnection(threading.Thread):
         try:
             filehandle = open(path+file_name,'r')
         except IOError:
-            sock.send('ABORT'.encode('utf-8'))
+            sock.send('ABORT SEND'.encode('utf-8'))
             print('File ' +str(path+file_name)+ ' not found; not sending...')
         else:
             #writes 8 byte header consisting of:
@@ -95,7 +95,7 @@ class NodeConnection(threading.Thread):
             #length of filename (4b)
             numbytes = math.ceil(os.stat(path+file_name).st_size)
             #amount of KB (1024) to receive, written to 4-byte integer
-            filename = repo + "/" + file_name if repo else file_name
+            filename = repo + file_name if repo else file_name
             filenamebytes = len(filename)
             print("Number of bytes in filename:",filenamebytes)
             print("Number of bytes in file data:",numbytes)
@@ -127,8 +127,8 @@ class NodeConnection(threading.Thread):
             if os.path.isdir(fullPath):
                 allFiles = allFiles + self.getListOfFiles(fullPath)
             else:
-                allFiles.append(fullPath)
-                    
+            	if not "/." in fullPath and self.id not in fullPath and "__" not in fullPath:
+                	allFiles.append(fullPath)
         return allFiles
 
     def sendrepo(self,repo):
@@ -142,13 +142,13 @@ class NodeConnection(threading.Thread):
             self.senddata(name, repo.replace(name,""),"")
         else:
             print("Repo Available, not file")
-            total_files = sum([len(files) for r, d, files in os.walk(repo)])
-            sock.send(str(total_files).encode('utf-8'))
+            #total_files = sum([len(files) for r, d, files in os.walk(repo)])
             files = self.getListOfFiles(repo)
-            print("Total files",total_files,files)
+            sock.send(str(len(files)).encode('utf-8'))
+            print("Total files",len(files),files)
             for file in files:
-                path = file.split(repo_name)[0]+repo_name+"/"
-                file_name = file.split(repo_name)[1][1:]
+                path = file.split(repo_name)[0]+repo_name
+                file_name = repo_name.join(file.split(repo_name)[1:])
                 self.senddata(file_name,path,sock,repo_name)
 
     def get_repos(self,keyword):
@@ -241,7 +241,8 @@ class NodeConnection(threading.Thread):
                         if results:
                             print("Results from Node:",self.id)
                             for i,result in enumerate(results.split(",")):
-                                print(str(i+1)+". "+result.replace("['","").split("/")[-1])
+                                result = result[:-1] if result[-1]=="/" else result
+                                print(str(i+1)+". "+result.split("/")[-1])
                     if message=="PINGER":
                         self.send("PONGER")
                     if message=="PONGER":

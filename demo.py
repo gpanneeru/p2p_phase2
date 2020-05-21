@@ -3,6 +3,7 @@ import time
 import os
 import re
 from os import walk
+import json
 
 class Demo():
 
@@ -43,6 +44,7 @@ class Demo():
         self.node.print_connections()
 
     def add_repo(self,repo_path):
+        repo_path = repo_path[:-1] if repo_path[-1]=="/" else repo_path
         keywords = set()
 
         with open(".exclude_patterns") as file:

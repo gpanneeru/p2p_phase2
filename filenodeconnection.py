@@ -125,7 +125,7 @@ class FileNodeConnection(threading.Thread):
                         curb += len(data)
                         percentage = next_val
                         #print('\r' + str(curb) + "/" + str(fileb))
-                        print("")
+                        # print("")
                     next_val = int(100*(curb/fileb))
                     for i in range(next_val - percentage):
                         bar.next()
@@ -151,7 +151,7 @@ class FileNodeConnection(threading.Thread):
                         curb += len(data)
                         percentage = next_val
                         #print('\r' + str(curb) + "/" + str(fileb))
-                        print("")
+                        # print("")
                     lines = lines.split("\n")[:-1]
                     next_val = int(100*(curb/fileb))
                     for i in range(next_val - percentage):
