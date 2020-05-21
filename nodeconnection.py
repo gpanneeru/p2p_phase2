@@ -100,7 +100,7 @@ class NodeConnection(threading.Thread):
     #        print("filename: "+data)
             sock.send(data.encode('utf-8'))
             while True:
-                data = filehandle.read(1024)
+                data = filehandle.read(4096)
                 if not data:
                     break
                 sock.send(data.encode('utf-8'))
@@ -132,7 +132,7 @@ class NodeConnection(threading.Thread):
         if os.path.isfile(repo):
             sock.send(str(1).encode('utf-8'))
             name = repo.split("/")[-1]
-            self.senddata(name, repo.replace(name,""),"")
+            self.senddata(name, repo.replace(name,""),sock,"")
         else:
             print("Repo Available, not file")
             #total_files = sum([len(files) for r, d, files in os.walk(repo)])

@@ -80,6 +80,7 @@ class FileNodeConnection(threading.Thread):
         sock.settimeout(10.0)
         sock.listen(5)
         print("Entering while loop")
+        block_size = 4096
         while not self.file_terminate.is_set():
             print("In while loop")
             c, addr = sock.accept()     # Establish connection with client.
@@ -93,6 +94,7 @@ class FileNodeConnection(threading.Thread):
                 print("filebytes: "+data)
                 fileb = int(data.split(" ")[0])#endianness may be affecting data transfer
                 filenamebytes = int(data.split(" ")[1])
+
                 data = str(c.recv(filenamebytes).decode('utf-8'))
                 print("filename received: "+data)
                 filename = data
@@ -109,10 +111,10 @@ class FileNodeConnection(threading.Thread):
                     writeto = open(destination+'/'+file_name,'w+')
                     while curb < fileb:
                         sys.stdout.flush()
-                        if curb+1024 > fileb:
+                        if curb+block_size > fileb:
                             data = str(c.recv(fileb-curb).decode('utf-8'))
                         else:
-                            data = str(c.recv(1024).decode('utf-8'))
+                            data = str(c.recv(block_size).decode('utf-8'))
                         writeto.write(data)
                         next_val = int(100*(curb/fileb))
                         for i in range(next_val - percentage):
@@ -121,6 +123,7 @@ class FileNodeConnection(threading.Thread):
                         percentage = next_val
                         #print('\r' + str(curb) + "/" + str(fileb))
                         # print("")
+                    # print("Last text:",data)
                     next_val = int(100*(curb/fileb))
                     for i in range(next_val - percentage):
                         bar.next()
@@ -133,10 +136,10 @@ class FileNodeConnection(threading.Thread):
                     lines = ""
                     while curb < fileb:
                         sys.stdout.flush()
-                        if curb+1024 > fileb:
+                        if curb+block_size > fileb:
                             data = str(c.recv(fileb-curb).decode('utf-8'))
                         else:
-                            data = str(c.recv(1024).decode('utf-8'))
+                            data = str(c.recv(block_size).decode('utf-8'))
                         data = str(data.decode('utf-8'))
                         if data:
                             lines += data
