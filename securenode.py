@@ -10,13 +10,6 @@ from base64 import b64decode, b64encode
 
 from p2pnetwork.node import Node
 
-"""
-Author : Maurice Snoeren <macsnoeren(at)gmail.com>
-Version: 0.1 beta (use at your own risk!)
-
-Python package p2pnet for implementing decentralized peer-to-peer network applications
-"""
-
 class SecureNode (Node):
     """This class is a concrete implementation of the node class and communicates with JSON between the nodes. 
     It implements a secure communication between the nodes. Not that the communication is encrypted, but

@@ -6,12 +6,7 @@ import random
 import hashlib
 import ast,os
 from progress.bar import IncrementalBar
-"""
-Author : Maurice Snoeren <macsnoeren(at)gmail.com>
-Version: 0.2 beta (use at your own risk!)
 
-Python package p2pnet for implementing decentralized peer-to-peer network applications
-"""
 class FileNodeConnection(threading.Thread):
 
     def __init__(self,id):
