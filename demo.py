@@ -73,17 +73,37 @@ class Demo():
 
         if not os.path.exists(".nodes/"+ self.node.id):
             os.mkdir(".nodes/"+self.node.id)
-        dict = {}
+        keyword_dict = {}
         for keyword in keywords:
-            if keyword in dict:
-                dict[keyword].append(repo_path)
+            if keyword in keyword_dict:
+                keyword_dict[keyword].append(repo_path)
             else:
-                dict[keyword] = [repo_path]
-        dict[repo_path.split('/')[-1]] = [repo_path]
-        f = open(".nodes/"+self.node.id+"/shared_repo_list",'a+')
-        for entry in dict.items():
+                keyword_dict[keyword] = [repo_path]
+        repo_name = repo_path.split('/')[-1]
+        keyword_dict[repo_name] = [repo_path]
+        keyword_file = ".nodes/"+self.node.id+"/shared_repo_list"
+        repo_file = ".nodes/"+self.node.id+"/repo_map.json"
+
+        f = open(keyword_file,'a+')
+        for entry in keyword_dict.items():
             f.write(str(entry) + "\n")
         f.close()
+
+        with open(repo_file, 'a+') as repo_map_file:
+            line = repo_map_file.readline()
+
+        if not line:
+            line = dict()
+        else:
+            line = json.loads(line)
+
+        if repo_name in line.keys():
+            line[repo_name].append(repo_path)
+        else:
+            line[repo_name] = [repo_path]
+
+        with open(repo_file, "w") as repo_map_file:
+            repo_map_file.write(json.dumps(line))
 
     def search(self,keyword):
         self.node.send_to_nodes("search "+keyword)

@@ -212,8 +212,15 @@ class NodeConnection(threading.Thread):
                     print("message received:",message)
                     if message.startswith("request"):
                         repo_name = message.split(" ")[1]
+                        repo_file = ".nodes/"+self.main_node.id+"/repo_map.json"
                         cur_dir = os.getcwd()
-                        if os.path.exists(cur_dir+"/"+repo_name):
+                        filepath = cur_dir+"/"+repo_name
+                        with open(repo_file, 'r') as repo_map_file:
+                            line = repo_map_file.readline()
+                            line = json.loads(line)
+                            filepath = line[repo_name][0]
+                            print(filepath)
+                        if os.path.exists(filepath):
                             #print("Sending "+repo_name+" to "+self.id)
                             print("Ready to send")
                             self.send("Sending "+repo_name)
