@@ -125,7 +125,7 @@ class NodeConnection(threading.Thread):
             fullPath = os.path.join(dirName, entry)
             # If entry is a directory then get the list of files in this directory 
             if os.path.isdir(fullPath):
-                allFiles = allFiles + getListOfFiles(fullPath)
+                allFiles = allFiles + self.getListOfFiles(fullPath)
             else:
                 allFiles.append(fullPath)
                     
@@ -139,7 +139,7 @@ class NodeConnection(threading.Thread):
         if os.path.isfile(repo):
             sock.send(str(1).encode('utf-8'))
             name = repo.split("/")[-1]
-            senddata(name,repo.replace(name,""),"")
+            self.senddata(name, repo.replace(name,""),"")
         else:
             print("Repo Available, not file")
             total_files = sum([len(files) for r, d, files in os.walk(repo)])
