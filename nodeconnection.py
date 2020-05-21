@@ -152,15 +152,28 @@ class NodeConnection(threading.Thread):
                 self.senddata(file_name,path,sock,repo_name)
 
     def get_repos(self,keyword):
-        folder = self.main_node.id+"/shared_repo_list"
-        if os.path.exists(folder):
-            s = open(folder, 'r').read()
-            dict = ast.literal_eval(s)
-            if keyword in dict:
-                print("Repos available:",dict[keyword])
-                for name in dict[keyword]:
-                    self.dict[name.split("/")[-1]] = name
-                return ",".join(dict[keyword])
+        if os.path.exists(".nodes/"+ self.main_node.id):
+            repos = set()
+            f = open(".nodes/"+self.main_node.id+"/shared_repo_list",'r')
+            for line in f.readlines():
+                line = line.strip("() \n")
+                key = line.split(",")[0].strip("''")
+                values_string = line.split(",")[1].strip().replace("['","").replace("']","")
+                print(key,keyword,values_string)
+                if key==keyword:
+                    repos.add(values_string)
+                    self.dict[values_string.split("/")[-1]] = values_string
+            f.close()
+            return ",".join(repos)
+        # folder = self.main_node.id+"/shared_repo_list"
+        # if os.path.exists(folder):
+        #     s = open(folder, 'r').read()
+        #     dict = ast.literal_eval(s)
+        #     if keyword in dict:
+        #         print("Repos available:",dict[keyword])
+        #         for name in dict[keyword]:
+        #             self.dict[name.split("/")[-1]] = name
+        #         return ",".join(dict[keyword])
         return ""
 
     # Required to implement the Thread. This is the main loop of the node client.
@@ -217,11 +230,11 @@ class NodeConnection(threading.Thread):
                     if message.startswith("Cannot"):
                         print(message)
                     if message.startswith("search_result"):
-                        results = message.split(" ")[1]
+                        results = message.split(" ")[-1]
                         if results:
                             print("Results from Node:",self.id)
                             for i,result in enumerate(results.split(",")):
-                                print(str(i+1)+". "+result.split("/")[-1])
+                                print(str(i+1)+". "+result.replace("['","").split("/")[-1])
                     if message=="PINGER":
                         self.send("PONGER")
                     if message=="PONGER":
