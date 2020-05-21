@@ -25,7 +25,7 @@ class Demo():
                     print("Trying to connect with",host+":"+str(port))
                     self.node.connect_with_node(host,port)
         except Exception as e:
-            print("Exception:",str(e))
+            print("Connection not successful, node not available")
 
 
     def init(self):
@@ -131,7 +131,7 @@ def main():
     print("Welcome to P2P Code Sharing APP")
     string = ""
     demo = Demo()
-    while not string=="quit" :
+    while not string=="exit" :
         string = input("> ")
         if string=="init":
             demo.init()
@@ -140,9 +140,17 @@ def main():
         elif string=="stop":
             demo.stop()
         elif string=="help":
-            print("Available Commands: init,connect,show connections,stop,quit")
-        elif string=="quit":
-            print("Quitting the application")
+            print("Available Commands: \n \
+            1. init: initializes a node with given port \n \
+            2. connect: Tries to connect with the cached nodes \n \
+            3. show connections: Shows all the connected nodes to the current node \n \
+            4. share <folder_path>: Adds the current folder to sharing list \n \
+            5. search <keyword>: Searches and gets result of any repositories related to the keyword \n \
+            6. request <repository> <node_id>: Requests repo from a specific node which in turn sends all the files in the repository \n \
+            7. stop: Stops the current node \n \
+            8. exit: Stops the application")
+        elif string=="exit":
+            print("Stopping the application")
             demo.stop()
         elif string=="":
             pass

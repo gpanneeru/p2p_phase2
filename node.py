@@ -84,7 +84,7 @@ class Node(threading.Thread):
 
     def init_server(self):
         """Initialization of the TCP/IP server to receive connections. It binds to the given host and port."""
-        print("Initialisation of the Node on port: " + str(self.port) + " on node (" + self.id + ")")
+        print("Initialisation of the Node on port: " + str(self.port) + " with node id: " + self.id )
         self.sock.bind((self.host, self.port))
         self.sock.settimeout(10.0)
         self.sock.listen(1)
@@ -92,9 +92,9 @@ class Node(threading.Thread):
     def print_connections(self):
         temp_inbound = []
         temp_outbound = []
-        print("Initial lengths: ", len(self.nodes_inbound), len(self.nodes_outbound))
+        # print("Initial lengths: ", len(self.nodes_inbound), len(self.nodes_outbound))
         for node in self.nodes_inbound:
-            print("inbound:",node.id)
+            # print("inbound:",node.id)
             try:
                 #sock = node.sock
                 self.heart_beat = False
@@ -109,7 +109,7 @@ class Node(threading.Thread):
             except Exception as e:
                 print("Exception: "+str(e))
         for node in self.nodes_outbound:
-            print("outbound:",node.id)
+            # print("outbound:",node.id)
             try:
                 #sock = node.sock
                 self.heart_beat = False
@@ -362,10 +362,12 @@ class Node(threading.Thread):
 
             self.nodes_outbound.append(thread_client)
             self.outbound_node_connected(thread_client)
+            print("Connection successful.")
 
         except Exception as e:
             self.debug_print("TcpServer.connect_with_node: Could not connect with node. (" + str(e) + ")")
-            print("Could not connect with node. (" + str(e) + ")")
+            # print("Could not connect with node. (" + str(e) + ")")
+            print("Connection not successful, node not available")
 
     def disconnect_with_node(self, node):
         """Disconnect the TCP/IP connection with the specified node. It stops the node and joins the thread.
@@ -404,7 +406,7 @@ class Node(threading.Thread):
                 connection, client_address = self.sock.accept()
                 # Basic information exchange (not secure) of the id's of the nodes!
                 connected_node_id = str(connection.recv(4096).decode('utf-8')) # When a node is connected, it sends it id!
-                print("connection:",connected_node_id) 
+                # print("connection:",connected_node_id) 
                 connection.send(self.id.encode('utf-8'))
                 old = False
                 for node in self.nodes_inbound+self.nodes_outbound:

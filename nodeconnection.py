@@ -73,7 +73,7 @@ class NodeConnection(threading.Thread):
 
 
     def get_ready_to_receive_files(self):
-        print("In get ready")
+        # print("In get ready")
         fileclient = FileNodeConnection(self.main_node.id)
         fileclient.start()
 
@@ -126,20 +126,20 @@ class NodeConnection(threading.Thread):
         return allFiles
 
     def sendrepo(self,repo):
-        print("In send repo function")
+        # print("In send repo function")
         repo_name = repo.split("/")[-1]
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(('127.0.0.1', 10001))
         if os.path.isfile(repo):
-            sock.send(str(1).encode('utf-8'))
+            sock.send("00001".encode('utf-8'))
             name = repo.split("/")[-1]
             self.senddata(name, repo.replace(name,""),sock,"")
         else:
-            print("Repo Available, not file")
+            # print("Repo Available, not file")
             #total_files = sum([len(files) for r, d, files in os.walk(repo)])
             files = self.getListOfFiles(repo)
-            sock.send(str(len(files)).encode('utf-8'))
-            print("Total files",len(files),files)
+            sock.send(str(len(files)).zfill(5).encode('utf-8'))
+            print("Total files:",len(files))
             for file in files:
                 path = file.split(repo_name)[0]+repo_name
                 file_name = repo_name.join(file.split(repo_name)[1:])
@@ -168,7 +168,7 @@ class NodeConnection(threading.Thread):
                 line = line.strip("() \n")
                 key = line.split(",")[0].strip("''")
                 values_string = line.split(",")[1].strip().replace("['","").replace("']","")
-                print(key,keyword,values_string)
+                # print(key,keyword,values_string)
                 if key==keyword:
                     repos.add(values_string)
                     #self.dict[values_string.split("/")[-1]] = values_string
@@ -218,7 +218,7 @@ class NodeConnection(threading.Thread):
                 index = self.buffer.find("-TSN")
                 while index > 0:
                     message = self.buffer[0:index]
-                    print("message received:",message)
+                    # print("message received:",message)
                     if message.startswith("request"):
                         self.load_repos()
                         repo_name = message.split(" ")[1]
@@ -229,7 +229,7 @@ class NodeConnection(threading.Thread):
                             line = repo_map_file.readline()
                             line = json.loads(line)
                             filepath = line[repo_name][0]
-                            print(filepath)
+                            # print(filepath)
                         if os.path.exists(filepath):
                             #print("Sending "+repo_name+" to "+self.id)
                             print("Ready to send")
@@ -239,7 +239,7 @@ class NodeConnection(threading.Thread):
                     if message.startswith("Sending"):
                         repo_name = message.split(" ")[1]
                         self.get_ready_to_receive_files()
-                        print("ready to receive")
+                        print("Ready to receive")
                         self.send("ready to receive "+repo_name)
                     if message.startswith("ready to receive"):
                         repo_name = message.split(" ")[-1]

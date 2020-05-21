@@ -11,7 +11,7 @@ class FileNodeConnection(threading.Thread):
 
     def __init__(self,id):
         threading.Thread.__init__(self)
-        print("initilaizing filethreadclient")
+        print("Initializing file reading client...")
         self.id = "downloads"
         self.file_terminate = threading.Event()
 
@@ -74,32 +74,32 @@ class FileNodeConnection(threading.Thread):
         
 
     def run(self):
-        print("starting file thread")
+        # print("starting file thread")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('127.0.0.1', 10001))
         sock.settimeout(10.0)
         sock.listen(5)
-        print("Entering while loop")
+        # print("Entering while loop")
         block_size = 4096
         while not self.file_terminate.is_set():
-            print("In while loop")
+            # print("In while loop")
             c, addr = sock.accept()     # Establish connection with client.
-            print('Got connection from', addr)
-            print("Receiving...")
-            data = str(c.recv(1024).decode("utf-8"))
-            print("data:",data)
+            # print('Got connection from', addr)
+            # print("Receiving...")
+            data = str(c.recv(5).decode("utf-8"))
+            # print("data:",data)
             num_files = int(data)
             for i in range(num_files):
                 data = str(c.recv(10).decode('utf-8'))
-                print("filebytes: "+data)
+                # print("filebytes: "+data)
                 fileb = int(data.split(" ")[0])#endianness may be affecting data transfer
                 filenamebytes = int(data.split(" ")[1])
 
                 data = str(c.recv(filenamebytes).decode('utf-8'))
-                print("filename received: "+data)
+                # print("filename received: "+data)
                 filename = data
                 curb = 0
-                print('Getting '+filename+"...")
+                print('Receiving '+filename+"...")
                 bar = IncrementalBar('Percentage of file transferred', max = 100)
                 percentage = 0
                 path = "/".join(filename.split("/")[:-1])
@@ -140,7 +140,7 @@ class FileNodeConnection(threading.Thread):
                             data = str(c.recv(fileb-curb).decode('utf-8'))
                         else:
                             data = str(c.recv(block_size).decode('utf-8'))
-                        data = str(data.decode('utf-8'))
+                        # data = str(data.decode('utf-8'))
                         if data:
                             lines += data
                         next_val = int(100*(curb/fileb))
@@ -163,5 +163,5 @@ class FileNodeConnection(threading.Thread):
                     bar.finish()
                     print('Transfer of '+filename+' successful.')
             self.file_terminate.set()
-        print("Out of while loop")
+        print("File reading client closed")
         sock.close()
