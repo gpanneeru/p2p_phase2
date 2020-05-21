@@ -87,7 +87,8 @@ class NodeConnection(threading.Thread):
             #writes 8 byte header consisting of:
             #length of file in kb (4b)
             #length of filename (4b)
-            numbytes = math.ceil(os.stat(path+file_name).st_size)
+
+            numbytes = len(open(path+file_name,'r').read())
             #amount of KB (1024) to receive, written to 4-byte integer
             filename = repo + file_name if repo else file_name
             filenamebytes = len(filename)
