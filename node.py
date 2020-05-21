@@ -9,16 +9,6 @@ import os
 
 from nodeconnection import NodeConnection
 
-"""
-Author: Maurice Snoeren <macsnoeren(at)gmail.com>
-Version: 0.2 beta (use at your own risk)
-
-Python package p2pnet for implementing decentralized peer-to-peer network applications
-
-TODO: Variabele to limit the number of connected nodes.
-TODO: Also create events when things go wrong, like a connection with a node has failed.
-"""
-
 class Node(threading.Thread):
     """Implements a node that is able to connect to other nodes and is able to accept connections from other nodes.
     After instantiation, the node creates a TCP/IP server with the given port.
@@ -196,6 +186,7 @@ class Node(threading.Thread):
             self.debug_print("Node send_to_node: Could not send the data, node is not found!")
 
     def ping(self, host, port):
+        """ Send a ping packet for discovering hosts on network"""
         data_packet = {}
         data_packet["command"] = "ping"
         data_packet["source_ip"] = self.host
@@ -209,6 +200,7 @@ class Node(threading.Thread):
         self.send_to_nodes("pkt:" + json.dumps(data_packet), exclude)
 
     def pong(self, ping_packet):
+        """ Response to ping. Contains address and port of sender and information regarding the repositories shared by it. """
         data_packet = {}
         data_packet["command"] = "pong"
         data_packet["source_ip"] = self.host
@@ -243,6 +235,7 @@ class Node(threading.Thread):
             self.send_to_node(receiver, "pkt:" + json.dumps(data_packet))
 
     def forward_packet(self, packet):
+        """ Forward a packet to all neighbours except the neighbour it came from """
         exclude = []
         if (packet["command"] == "pong" or packet["command"] == "query_hit") and ((self.host == packet["destination_ip"] and self.port == 
         packet["destination_port"]) or self.id == packet["destination_node_id"]):
@@ -267,8 +260,8 @@ class Node(threading.Thread):
         packet["sender_node_id"] = self.id
         self.send_to_nodes("pkt:" + json.dumps(packet), exclude)
 
-    # Check if node is already connected with this node!
-    def is_connected(self, host, port):
+    def is_connected(self, host, port):        
+        """ Check if node is already connected with this node """
         for node in self.nodes_outbound:
             if node.host == host and node.port == port:
                 print("connect_with_node: Already connected with this node.")
@@ -280,6 +273,7 @@ class Node(threading.Thread):
         return False
 
     def query(self, query_param):
+        """ Send a ping packet to search for a repository or file on the network. The search keyword is specified in query param. """     
         data_packet = {}
         data_packet["command"] = "query"
         data_packet["query_param"] = query_param
@@ -294,6 +288,8 @@ class Node(threading.Thread):
         self.send_to_nodes("pkt:" + json.dumps(data_packet), exclude)
 
     def query_hit(self, query_packet):
+        """ Response to a query packet. Packet is sent if repository specified in query param of query packet, is found in local data.
+        Provides recipient with information like port, IP address and speed of responding host to pull the data matching the query. """     
         data_packet = {}
         data_packet["command"] = "query_hit"
         data_packet["param"] = query_packet["query_param"]

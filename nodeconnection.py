@@ -8,12 +8,6 @@ import ast,os,math
 from filenodeconnection import FileNodeConnection
 import json
 
-"""
-Author : Maurice Snoeren <macsnoeren(at)gmail.com>
-Version: 0.2 beta (use at your own risk!)
-
-Python package p2pnet for implementing decentralized peer-to-peer network applications
-"""
 class NodeConnection(threading.Thread):
     """The class NodeConnection is used by the class Node and represent the TCP/IP socket connection with another node. 
        Both inbound (nodes that connect with the server) and outbound (nodes that are connected to) are represented by
@@ -100,7 +94,6 @@ class NodeConnection(threading.Thread):
             print("Number of bytes in filename:",filenamebytes)
             print("Number of bytes in file data:",numbytes)
             print('Sending '+str(path+file_name)+'...')
-            print("what are you sending?",str(numbytes)+" "+str(filenamebytes))
             sending = str(numbytes).zfill(6)+" "+str(filenamebytes).zfill(3)
             sock.send(sending.encode('utf-8'))
             data = filename
@@ -256,14 +249,9 @@ class NodeConnection(threading.Thread):
                         json_packet = json.loads(message)
                         if json_packet["command"] == "ping":
                             self.main_node.pong(json_packet)
-                            self.main_node.forward_packet(json_packet)
-                        elif json_packet["command"] == "pong":
-                            self.main_node.forward_packet(json_packet)
                         elif json_packet["command"] == "query":
                             self.main_node.query_hit(json_packet)
-                            self.main_node.forward_packet(json_packet)
-                        elif json_packet["command"] == "query_hit":
-                            self.main_node.forward_packet(json_packet)
+                        self.main_node.forward_packet(json_packet)
                     self.buffer = self.buffer[index + 4::]
 
                     self.main_node.message_count_recv += 1
