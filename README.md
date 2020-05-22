@@ -14,5 +14,3 @@ This is a peer2peer decentralized code sharing application which provides follow
 ## How to Run:
 
 To start the application, execute the run.sh file by using the following command: `./run.sh` 
-
-The application can be used to create a peer2peer network in a single machine by running the application in different terminals with different ports
