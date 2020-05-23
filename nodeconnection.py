@@ -74,7 +74,7 @@ class NodeConnection(threading.Thread):
 
     def get_ready_to_receive_files(self):
         # print("In get ready")
-        fileclient = FileNodeConnection(self.main_node.id)
+        fileclient = FileNodeConnection(self.main_node.id,self.id)
         fileclient.start()
 
     def senddata(self,file_name,path,sock,repo):

@@ -9,10 +9,12 @@ from progress.bar import IncrementalBar
 
 class FileNodeConnection(threading.Thread):
 
-    def __init__(self,id):
+    def __init__(self,id1,id2):
         threading.Thread.__init__(self)
         print("Initializing file reading client...")
         self.id = "downloads"
+        self.id1 = id1
+        self.id2 = id2
         self.file_terminate = threading.Event()
 
     def writeToFile(self,lines1,filename2,filename3):
@@ -21,55 +23,78 @@ class FileNodeConnection(threading.Thread):
         file2.close()
         Set = set()
         for line in lines2:
-            #if not line == '\n':
-            Set.add(line)
+            if not line == '\n':
+                Set.add(line.replace("\n",""))
 
         intersection = []
         for line in lines1:
+            line = line.replace("\n","")
             if line in Set:
                 intersection.append(line)
         i=j=0
         file3 = open(filename3,'w+')
         magenta = lambda text: '\033[0;35m' + text + '\033[0m'
-        for line in intersection:
+        for k,line in enumerate(intersection):
+            # print(i,j,k)
             app_l1 = []
             app_l2 = []
             check1 = check2 = False
-            while not lines1[i] == line:
+            while not lines1[i].replace("\n","") == line:
                 app_l1.append(lines1[i])
                 if not lines1[i]=="\n":
                     check1 = True
                 #file3.write(lines1[i])
                 i+=1
-            while not lines2[j] == line:
+            while not lines2[j].replace("\n","") == line:
                 app_l2.append(lines2[j])
-                if not lines2[i]=="\n":
+                if not lines2[j]=="\n":
                     check2 = True
                 #file3.write(lines2[j])
                 j+=1
             #print("Parts: ",app_l1,app_l2)
             if check1 and check2:
-                file3.write("<<<<<<<<<<<< Source\n")
+                file3.write("<<<<<<<<<<<< "+self.id1+"\n")
                 for app_line in app_l1:
                     file3.write(app_line)
                 file3.write("============\n")
                 for app_line in app_l2:
                     file3.write(app_line)
-                file3.write(">>>>>>>>>>>> Destination\n")
+                file3.write(">>>>>>>>>>>> "+self.id2+"\n")
             else:
-                for app_line in app_l1:
-                    file3.write(app_line)
-                for app_line in app_l2:
-                    file3.write(app_line)
-            file3.write(line)
+                if not check1 and not check2:
+                    for app_line in app_l1:
+                        file3.write(app_line)
+                elif app_l1 and check1:
+                    for app_line in app_l1:
+                        file3.write(app_line)
+                elif app_l2 and check2:
+                    for app_line in app_l2:
+                        file3.write(app_line)
+            file3.write(line+"\n")
             i+=1
             j+=1
-        while i < len(lines1):
-            file3.write(lines1[i])
-            i+=1
-        while j < len(lines2):
-            file3.write(lines2[j])
-            j+=1
+            # print(i,j,k)
+        if i< len(lines1) and j<len(lines2):
+            file3.write("<<<<<<<<<<<< "+self.id1+"\n")
+            while i < len(lines1):
+                file3.write(lines1[i])
+                if not lines1[i].endswith("\n"):
+                    file3.write("\n")
+                i+=1
+            file3.write("============\n")
+            while j < len(lines2):
+                file3.write(lines2[j])
+                if not lines2[j].endswith("\n"):
+                    file3.write("\n")
+                j+=1
+            file3.write(">>>>>>>>>>>> "+self.id2+"\n")
+        else:
+            while i < len(lines1):
+                file3.write(lines1[i])
+                i+=1
+            while j < len(lines2):
+                file3.write(lines2[j])
+                j+=1
         file3.close()
         
 
@@ -150,7 +175,7 @@ class FileNodeConnection(threading.Thread):
                         percentage = next_val
                         #print('\r' + str(curb) + "/" + str(fileb))
                         # print("")
-                    lines = lines.split("\n")[:-1]
+                    lines = lines.split("\n")
                     next_val = int(100*(curb/fileb))
                     for i in range(next_val - percentage):
                         bar.next()
@@ -158,7 +183,8 @@ class FileNodeConnection(threading.Thread):
                     percentage = next_val
                     #print("lines: ",lines)
                     #print("end")
-                    lines = [x+"\n" for x in lines]
+                    for i in range(len(lines)-1):
+                        lines[i] = lines[i]+"\n"
                     self.writeToFile(lines,destination+"/"+file_name,destination+"/"+file_name)
                     bar.finish()
                     print('Transfer of '+filename+' successful.')
