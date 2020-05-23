@@ -5,7 +5,7 @@ import re
 from os import walk
 import json
 
-class Demo():
+class CommandController():
 
     def __init__(self):
         self.node = None
@@ -130,15 +130,15 @@ class Demo():
 def main():
     print("Welcome to P2P Code Sharing APP")
     string = ""
-    demo = Demo()
+    controller = CommandController()
     while not string=="exit" :
         string = input("> ")
         if string=="init":
-            demo.init()
+            controller.init()
         elif string=="connect":
-            demo.connect_with_cached_nodes()
+            controller.connect_with_cached_nodes()
         elif string=="stop":
-            demo.stop()
+            controller.stop()
         elif string=="help":
             print("Available Commands: \n \
             1. init: initializes a node with given port \n \
@@ -151,25 +151,25 @@ def main():
             8. exit: Stops the application")
         elif string=="exit":
             print("Stopping the application")
-            demo.stop()
+            controller.stop()
         elif string=="":
             pass
         elif string.startswith("share"):
             repo_path = string.split(" ")[1]
-            demo.add_repo(repo_path)
+            controller.add_repo(repo_path)
         elif string.startswith("search"):
             keyword = string.split(" ")[1]
-            demo.search(keyword)
+            controller.search(keyword)
         elif string.startswith("request"):
             repo_name,node_id = string.split(" ")[1:]
-            demo.request(repo_name,node_id)
+            controller.request(repo_name,node_id)
         elif string=="show connections":
-            demo.show_connections()
+            controller.show_connections()
         elif string=="ping":
-            demo.ping()
+            controller.ping()
         elif string.startswith("query"):
             query_param = string.split(" ")[1]
-            demo.query(query_param)
+            controller.query(query_param)
         else:
             print("Invalid command, use help to see the commands which can be used")
 
