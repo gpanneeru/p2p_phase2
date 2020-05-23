@@ -54,10 +54,10 @@ class FileNodeConnection(threading.Thread):
             #print("Parts: ",app_l1,app_l2)
             if check1 and check2:
                 file3.write("<<<<<<<<<<<< "+self.id1+"\n")
-                for app_line in app_l1:
+                for app_line in app_l2:
                     file3.write(app_line)
                 file3.write("============\n")
-                for app_line in app_l2:
+                for app_line in app_l1:
                     file3.write(app_line)
                 file3.write(">>>>>>>>>>>> "+self.id2+"\n")
             else:
@@ -76,17 +76,17 @@ class FileNodeConnection(threading.Thread):
             # print(i,j,k)
         if i< len(lines1) and j<len(lines2):
             file3.write("<<<<<<<<<<<< "+self.id1+"\n")
-            while i < len(lines1):
-                file3.write(lines1[i])
-                if not lines1[i].endswith("\n"):
-                    file3.write("\n")
-                i+=1
-            file3.write("============\n")
             while j < len(lines2):
                 file3.write(lines2[j])
                 if not lines2[j].endswith("\n"):
                     file3.write("\n")
                 j+=1
+            file3.write("============\n")
+            while i < len(lines1):
+                file3.write(lines1[i])
+                if not lines1[i].endswith("\n"):
+                    file3.write("\n")
+                i+=1
             file3.write(">>>>>>>>>>>> "+self.id2+"\n")
         else:
             while i < len(lines1):
